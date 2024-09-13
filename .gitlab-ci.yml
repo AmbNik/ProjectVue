@@ -1,0 +1,41 @@
+stages:
+  - build
+  - sonarqube
+  - deploy
+  - cleanup
+before_script:
+  - docker login registry-gitlab.abak2000.ru -u gitlab+deploy-token-14 -p qeQqEwqyt6znPS7Mgrh4
+
+build:
+  stage: build
+  tags:
+    - frontend
+  only:
+    - main
+    - production/*
+  script:
+    - cp $ENV_FILE .env
+    # собственно сборка
+    - docker compose build
+deploy:
+  stage: deploy
+  tags:
+    - frontend
+  # выкатываем только ветку master
+  only:
+    - main
+  # для этой ступени другие команды инициализации
+  script:
+    - cp $ENV_FILE .env
+    - docker compose up -d
+  artifacts:
+    paths:
+      - .env
+cleanup:
+  stage: cleanup
+  tags:
+    - frontend
+  only:
+    - main
+  script:
+    - docker builder prune --force
